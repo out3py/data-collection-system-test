@@ -31,4 +31,3 @@ jobs:
           git add .
           git diff --staged --quiet || git commit -m "Daily content management - $(date +%Y-%m-%d)"
           git push
-

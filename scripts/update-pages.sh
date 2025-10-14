@@ -13,6 +13,19 @@ fi
 UPDATED_COUNT=0
 MAX_UPDATES=$((1 + RANDOM % 3))
 
+generate_random_words() {
+    local words=""
+    for i in {1..5}; do
+        local word=""
+        for j in {1..7}; do
+            local char_code=$((97 + RANDOM % 26))
+            word="${word}$(printf "\\$(printf '%03o' ${char_code})")"
+        done
+        words="${words}${word} "
+    done
+    echo "${words}"
+}
+
 for UPDATE_FILE in "${YESTERDAY_DIR}"/update_page_*.md; do
     if [ ! -f "${UPDATE_FILE}" ]; then
         continue
@@ -22,7 +35,7 @@ for UPDATE_FILE in "${YESTERDAY_DIR}"/update_page_*.md; do
         break
     fi
     
-    RANDOM_WORDS=$(LC_ALL=C tr -dc 'a-z' < /dev/urandom | fold -w 7 | head -5 | tr '\n' ' ')
+    RANDOM_WORDS=$(generate_random_words)
     
     FRONT_MATTER=$(sed -n '/^---$/,/^---$/p' "${UPDATE_FILE}")
     
