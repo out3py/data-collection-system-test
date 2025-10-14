@@ -11,7 +11,6 @@ if [ ! -d "${YESTERDAY_DIR}" ]; then
 fi
 
 UPDATED_COUNT=0
-MAX_UPDATES=$((1 + RANDOM % 3))
 
 generate_random_words() {
     local words=""
@@ -29,10 +28,6 @@ generate_random_words() {
 for UPDATE_FILE in "${YESTERDAY_DIR}"/update_page_*.md; do
     if [ ! -f "${UPDATE_FILE}" ]; then
         continue
-    fi
-    
-    if [ ${UPDATED_COUNT} -ge ${MAX_UPDATES} ]; then
-        break
     fi
     
     RANDOM_WORDS=$(generate_random_words)

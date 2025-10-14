@@ -11,15 +11,10 @@ if [ ! -d "${YESTERDAY_DIR}" ]; then
 fi
 
 DELETED_COUNT=0
-MAX_DELETES=$((1 + RANDOM % 3))
 
 for DELETE_FILE in "${YESTERDAY_DIR}"/delete_page_*.md; do
     if [ ! -f "${DELETE_FILE}" ]; then
         continue
-    fi
-    
-    if [ ${DELETED_COUNT} -ge ${MAX_DELETES} ]; then
-        break
     fi
     
     rm -f "${DELETE_FILE}"
