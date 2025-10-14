@@ -18,20 +18,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-          token: ${{ secrets.GITBOT_GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Run content management
         run: |
           bash scripts/run-content-management.sh
       
       - name: Commit and push changes
-        env:
-          CI_COMMIT_AUTHOR: gitbot github_actions_cicd
         run: |
-          git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
-          git config --global user.email "gitbot@outspy.net"
-          git pull
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
           git add .
           git diff --staged --quiet || git commit -m "Daily content management - $(date +%Y-%m-%d)"
           git push
