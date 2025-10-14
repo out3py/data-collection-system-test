@@ -15,7 +15,7 @@ for i in $(seq 1 ${NUM_CREATED}); do
     FILENAME="${DAY_DIR}/created_page_${i}.md"
     CREATED_DATE=$(date '+%Y-%m-%d %H:%M:%S')
     
-    RANDOM_WORDS=$(shuf -n 5 /usr/share/dict/words 2>/dev/null | tr '\n' ' ' || head -c 50 /dev/urandom | tr -dc 'a-z' | fold -w 5 | head -5 | tr '\n' ' ')
+    RANDOM_WORDS=$(LC_ALL=C tr -dc 'a-z' < /dev/urandom | fold -w 7 | head -5 | tr '\n' ' ')
     
     cat > "${FILENAME}" << EOF
 ---
@@ -34,7 +34,7 @@ for i in $(seq 1 ${NUM_UPDATE}); do
     FILENAME="${DAY_DIR}/update_page_${i}.md"
     CREATED_DATE=$(date '+%Y-%m-%d %H:%M:%S')
     
-    RANDOM_WORDS=$(shuf -n 5 /usr/share/dict/words 2>/dev/null | tr '\n' ' ' || head -c 50 /dev/urandom | tr -dc 'a-z' | fold -w 5 | head -5 | tr '\n' ' ')
+    RANDOM_WORDS=$(LC_ALL=C tr -dc 'a-z' < /dev/urandom | fold -w 7 | head -5 | tr '\n' ' ')
     
     cat > "${FILENAME}" << EOF
 ---
@@ -53,7 +53,7 @@ for i in $(seq 1 ${NUM_DELETE}); do
     FILENAME="${DAY_DIR}/delete_page_${i}.md"
     CREATED_DATE=$(date '+%Y-%m-%d %H:%M:%S')
     
-    RANDOM_WORDS=$(shuf -n 5 /usr/share/dict/words 2>/dev/null | tr '\n' ' ' || head -c 50 /dev/urandom | tr -dc 'a-z' | fold -w 5 | head -5 | tr '\n' ' ')
+    RANDOM_WORDS=$(LC_ALL=C tr -dc 'a-z' < /dev/urandom | fold -w 7 | head -5 | tr '\n' ' ')
     
     cat > "${FILENAME}" << EOF
 ---

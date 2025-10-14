@@ -22,7 +22,7 @@ for UPDATE_FILE in "${YESTERDAY_DIR}"/update_page_*.md; do
         break
     fi
     
-    RANDOM_WORDS=$(shuf -n 5 /usr/share/dict/words 2>/dev/null | tr '\n' ' ' || head -c 50 /dev/urandom | tr -dc 'a-z' | fold -w 5 | head -5 | tr '\n' ' ')
+    RANDOM_WORDS=$(LC_ALL=C tr -dc 'a-z' < /dev/urandom | fold -w 7 | head -5 | tr '\n' ' ')
     
     FRONT_MATTER=$(sed -n '/^---$/,/^---$/p' "${UPDATE_FILE}")
     
