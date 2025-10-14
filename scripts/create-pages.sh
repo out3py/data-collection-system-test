@@ -3,7 +3,7 @@
 set -e
 
 TODAY=$(date +%d.%m.%y)
-DAY_DIR="_daily_pages/day-${TODAY}"
+DAY_DIR="daily_pages/day-${TODAY}"
 
 mkdir -p "${DAY_DIR}"
 

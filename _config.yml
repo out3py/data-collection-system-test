@@ -24,17 +24,15 @@ exclude:
   - README.md
   - .gitignore
   - .github/
+  - scripts/
 
-# Collections
-collections:
-  daily_pages:
-    output: true
-    permalink: /:collection/:name/
+# Include daily_pages directory in the build
+include:
+  - daily_pages
 
-# Defaults - using minima theme defaults
+# Defaults for daily pages
 defaults:
   - scope:
-      path: ""
-      type: "daily_pages"
+      path: "daily_pages"
     values:
       layout: "page"

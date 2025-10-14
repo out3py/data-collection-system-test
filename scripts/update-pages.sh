@@ -3,7 +3,7 @@
 set -e
 
 YESTERDAY=$(date -v-1d +%d.%m.%y 2>/dev/null || date -d "yesterday" +%d.%m.%y)
-YESTERDAY_DIR="_daily_pages/day-${YESTERDAY}"
+YESTERDAY_DIR="daily_pages/day-${YESTERDAY}"
 
 if [ ! -d "${YESTERDAY_DIR}" ]; then
     echo "0"
