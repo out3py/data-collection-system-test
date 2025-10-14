@@ -26,11 +26,9 @@ exclude:
   - .github/
   - scripts/
 
-# Include daily_pages directory in the build
 include:
   - daily_pages
 
-# Defaults for daily pages
 defaults:
   - scope:
       path: "daily_pages"
