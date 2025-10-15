@@ -1,7 +1,0 @@
----
-layout: page
-title: "Created Page 2"
-created_date: "2025-10-15 10:57:22"
----
-
-a enim nunc tristique ornare 

@@ -2,8 +2,9 @@
 
 set -e
 
-TODAY=$(date +%d.%m.%y)
-DAY_DIR="daily_pages/day-${TODAY}"
+TIMESTAMP=$(date +%s)
+CONTENT_ID="content-${TIMESTAMP}"
+DAY_DIR="daily_pages/${CONTENT_ID}"
 
 mkdir -p "${DAY_DIR}"
 

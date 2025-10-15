@@ -1,7 +1,0 @@
----
-layout: page
-title: "Delete Page 2"
-created_date: "2025-10-15 11:44:28"
----
-
-metus nunc non tristique mattis 

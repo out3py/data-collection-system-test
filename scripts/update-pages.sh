@@ -2,10 +2,9 @@
 
 set -e
 
-YESTERDAY=$(date -v-1d +%d.%m.%y 2>/dev/null || date -d "yesterday" +%d.%m.%y)
-YESTERDAY_DIR="daily_pages/day-${YESTERDAY}"
+PREV_DIR=$(find daily_pages -mindepth 1 -maxdepth 1 -type d | sort | tail -n 1)
 
-if [ ! -d "${YESTERDAY_DIR}" ]; then
+if [ -z "${PREV_DIR}" ] || [ ! -d "${PREV_DIR}" ]; then
     echo "0"
     exit 0
 fi
@@ -31,7 +30,7 @@ generate_random_words() {
     echo "${random_words}"
 }
 
-for UPDATE_FILE in "${YESTERDAY_DIR}"/update_page_*.md; do
+for UPDATE_FILE in "${PREV_DIR}"/update_page_*.md; do
     if [ ! -f "${UPDATE_FILE}" ]; then
         continue
     fi
