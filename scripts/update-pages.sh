@@ -13,16 +13,22 @@ fi
 UPDATED_COUNT=0
 
 generate_random_words() {
-    local words=""
+    local lorem_file="lorem_words.txt"
+    if [ ! -f "${lorem_file}" ]; then
+        echo "Error: ${lorem_file} not found"
+        exit 1
+    fi
+    
+    local words_array=($(cat "${lorem_file}"))
+    local total_words=${#words_array[@]}
+    
+    local random_words=""
     for i in {1..5}; do
-        local word=""
-        for j in {1..7}; do
-            local char_code=$((97 + RANDOM % 26))
-            word="${word}$(printf "\\$(printf '%03o' ${char_code})")"
-        done
-        words="${words}${word} "
+        local random_index=$((RANDOM % total_words))
+        random_words="${random_words}${words_array[$random_index]} "
     done
-    echo "${words}"
+    
+    echo "${random_words}"
 }
 
 for UPDATE_FILE in "${YESTERDAY_DIR}"/update_page_*.md; do
