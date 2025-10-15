@@ -1,7 +1,7 @@
 ---
 layout: page
 title: "Delete Page 1"
-created_date: "2025-10-15 08:23:01"
+created_date: "2025-10-15 10:57:22"
 ---
 
-vel amet senectus morbi varius 
+elementum dolor ipsum sit id 
