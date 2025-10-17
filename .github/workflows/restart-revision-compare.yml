@@ -28,7 +28,7 @@ jobs:
         if: always()
         run: |
           git config --local user.email "gitbot@outspy.com"
-          git config --local user.name "GitBot OutSpy"
+          git config --local user.name "Compare Manager"
           git add reports/ || true
           git diff --staged --quiet || git commit -m "restart_revision compare report - $(date +%Y-%m-%dT%H:%M:%S)"
           git push || true
