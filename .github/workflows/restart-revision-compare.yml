@@ -1,0 +1,34 @@
+name: Restart Revision Compare
+
+on:
+  repository_dispatch:
+    types:
+    - restart_revision
+
+permissions:
+  contents: write
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITBOT_GITHUB_TOKEN }}
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Run compare
+        run: |
+          bash scripts/compare.sh
+
+      - name: Commit and push report
+        if: always()
+        run: |
+          git config --local user.email "gitbot@outspy.com"
+          git config --local user.name "GitBot OutSpy"
+          git add reports/ || true
+          git diff --staged --quiet || git commit -m "restart_revision compare report - $(date +%Y-%m-%dT%H:%M:%S)"
+          git push || true

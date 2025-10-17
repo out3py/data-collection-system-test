@@ -18,7 +18,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITBOT_GITHUB_TOKEN }}
       
       - name: Run content management
         run: |
@@ -26,8 +26,8 @@ jobs:
       
       - name: Commit and push changes
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          git config --local user.email "gitbot@outspy.com"
+          git config --local user.name "GitBot OutSpy"
           git add .
           git diff --staged --quiet || git commit -m "Daily content management - $(date +%Y-%m-%d)"
           git push
