@@ -43,10 +43,6 @@ title: "Restart Revision Compare ${TS_ID}"
 
 # Restart Revision Compare
 
-**Timestamp**: ${TS}
-**Event Type**: ${EVENT_TYPE}
-**URL**: ${URL}
-
 ## Payload
 - **found_links**: ${FOUND_LINKS}
 - **new_links**: ${NEW_LINKS}
@@ -61,7 +57,6 @@ title: "Restart Revision Compare ${TS_ID}"
 - Updated vs UpdatedLinks: **${FILES_UPDATED}** ?= **${UPDATED_LINKS}** → **${UPDATED_MATCH}**
 
 ---
-*Generated automatically by dispatch-compare.sh*
 EOF
 
 echo "Report written to: ${REPORT_FILE}"
