@@ -41,7 +41,7 @@ cat <<EOF | curl -fsS -X POST -H 'Content-type: application/json' -d @- "$SLACK_
       "type": "header",
       "text": {
         "type": "plain_text",
-        "text": "🚨 Auto-test Failed"
+        "text": "🚨 Auto-test Failed (QA)"
       }
     },
     {
