@@ -25,6 +25,8 @@ exclude:
   - .gitignore
   - .github/
   - scripts/
+  - stats.md
+  - reports/
 
 include:
   - daily_pages
