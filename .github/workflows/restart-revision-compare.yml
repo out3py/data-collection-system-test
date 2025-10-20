@@ -3,7 +3,7 @@ name: Restart Revision Compare
 on:
   repository_dispatch:
     types:
-    - restart_revision
+      - restart_revision
 
 permissions:
   contents: write
@@ -32,3 +32,14 @@ jobs:
           git add reports/ || true
           git diff --staged --quiet || git commit -m "Restart revision compare report - $(date +%Y-%m-%dT%H:%M:%S)"
           git push || true
+
+      - name: Notify Slack (send md file)
+        if: failure()
+        run: |
+          HEADER="*Auto-test failed*\n\n"
+          REPORT=$(cat reports/report.md)
+          PAYLOAD=$(printf "%s%s" "$HEADER" "$REPORT" | jq -Rs .)
+
+          curl -fsS -X POST -H 'Content-type: application/json' \
+            --data "{\"text\": ${PAYLOAD}}" \
+            "${{ secrets.SLACK_WEBHOOK_URL }}"
