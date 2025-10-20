@@ -8,7 +8,6 @@ if [ -z "${SLACK_WEBHOOK_URL:-}" ]; then
 fi
 
 REPORT_FILE=$(ls -t reports/restart_revision_*.md 2>/dev/null | head -n 1)
-
 if [ -z "$REPORT_FILE" ]; then
   echo "Error: No report file found in reports/ directory"
   exit 1
@@ -35,13 +34,37 @@ else
   UPDATED_EMOJI=":x:"
 fi
 
-MESSAGE=":rotating_light: *Auto-test Failed*\n\n*Comparison Results:*\n${CREATED_EMOJI} Created vs NewLinks: \`${FILES_CREATED}\` vs \`${NEW_LINKS}\` → *${CREATED_MATCH}*\n${UPDATED_EMOJI} Updated vs UpdatedLinks: \`${FILES_UPDATED}\` vs \`${UPDATED_LINKS}\` → *${UPDATED_MATCH}*"
+cat <<EOF | curl -fsS -X POST -H 'Content-type: application/json' -d @- "$SLACK_WEBHOOK_URL"
+{
+  "blocks": [
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "text": "🚨 Auto-test Failed"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*Comparison Results:*\n${CREATED_EMOJI} *Created vs NewLinks:* \`${FILES_CREATED}\` vs \`${NEW_LINKS}\` → *${CREATED_MATCH}*\n${UPDATED_EMOJI} *Updated vs UpdatedLinks:* \`${FILES_UPDATED}\` vs \`${UPDATED_LINKS}\` → *${UPDATED_MATCH}*"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "context",
+      "elements": [
+        {
+          "type": "mrkdwn",
+          "text": "_Report file:_ \`$REPORT_FILE\`"
+        }
+      ]
+    }
+  ]
+}
+EOF
 
-PAYLOAD=$(jq -n --arg text "$MESSAGE" '{text: $text, mrkdwn: true}')
-
-curl -fsS -X POST -H 'Content-type: application/json' \
-  --data "$PAYLOAD" \
-  "$SLACK_WEBHOOK_URL"
-
-echo "Report sent successfully to Slack!"
-
+echo "Report sent to Slack!"
