@@ -39,6 +39,19 @@ else
   UPDATED_EMOJI=":x:"
 fi
 
+SANITIZED_GRAFANA_URL="${GRAFANA_DASH_URL-}"
+if [ -n "$SANITIZED_GRAFANA_URL" ]; then
+  SANITIZED_GRAFANA_URL="${SANITIZED_GRAFANA_URL#@}"
+  if [ "$REVISION_ID" != "N/A" ]; then
+    DASHBOARD_URL="${SANITIZED_GRAFANA_URL}${REVISION_ID}"
+  else
+    DASHBOARD_URL="${SANITIZED_GRAFANA_URL}"
+  fi
+  DASHBOARD_LINE="\n*Dashboard:* <${DASHBOARD_URL}|Dashboard>"
+else
+  DASHBOARD_LINE=""
+fi
+
 cat <<EOF | curl -fsS -X POST -H 'Content-type: application/json' -d @- "$SLACK_WEBHOOK_URL"
 {
   "blocks": [
@@ -64,7 +77,7 @@ cat <<EOF | curl -fsS -X POST -H 'Content-type: application/json' -d @- "$SLACK_
       "elements": [
         {
           "type": "mrkdwn",
-          "text": "*RevisionID:* \`$REVISION_ID\`\n_Report file:_ \`$REPORT_FILE\`"
+          "text": "*RevisionID:* \`$REVISION_ID\`\n_Report file:_ \`$REPORT_FILE\`${DASHBOARD_LINE}"
         }
       ]
     }
