@@ -23,7 +23,7 @@ generate_random_words() {
     local total_words=${#words_array[@]}
     
     local random_words=""
-    for i in {1..5}; do
+    for i in {1..35}; do
         local random_index=$((RANDOM % total_words))
         random_words="${random_words}${words_array[$random_index]} "
     done
