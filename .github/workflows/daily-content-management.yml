@@ -1,6 +1,7 @@
 name: Daily Content Management
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: '0 0 * * *' #  At the end of every day
   repository_dispatch:
