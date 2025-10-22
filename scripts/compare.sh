@@ -11,6 +11,7 @@ if [[ -z "${EVENT_JSON}" || ! -f "${EVENT_JSON}" ]]; then
 fi
 
 URL=$(jq -r '.client_payload.url // ""' "${EVENT_JSON}")
+REVISION_ID=$(jq -r '.client_payload.revision_id // ""' "${EVENT_JSON}")
 FOUND_LINKS=$(jq -r '.client_payload.found_links // 0' "${EVENT_JSON}")
 NEW_LINKS=$(jq -r '.client_payload.new_links // 0' "${EVENT_JSON}")
 UPDATED_LINKS=$(jq -r '.client_payload.updated_links // 0' "${EVENT_JSON}")
@@ -44,6 +45,8 @@ title: "Restart Revision Compare ${TS_ID}"
 # Restart Revision Compare
 
 ## Payload
+- **url**: ${URL}
+- **RevisionID**: ${REVISION_ID}
 - **found_links**: ${FOUND_LINKS}
 - **new_links**: ${NEW_LINKS}
 - **updated_links**: ${UPDATED_LINKS}

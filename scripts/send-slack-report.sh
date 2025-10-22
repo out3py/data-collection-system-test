@@ -19,6 +19,11 @@ FILES_CREATED=$(grep "Files Created" "$REPORT_FILE" | sed -E 's/.*: ([0-9]+)/\1/
 FILES_UPDATED=$(grep "Files Updated" "$REPORT_FILE" | sed -E 's/.*: ([0-9]+)/\1/')
 NEW_LINKS=$(grep "new_links" "$REPORT_FILE" | sed -E 's/.*: ([0-9]+)/\1/')
 UPDATED_LINKS=$(grep "updated_links" "$REPORT_FILE" | sed -E 's/.*: ([0-9]+)/\1/')
+REVISION_ID=$(grep -E '^\- \*\*revision_id\*\*: ' "$REPORT_FILE" | sed -E 's/.*: (.+)/\1/' || echo "")
+if [ -z "$REVISION_ID" ]; then
+  REVISION_ID=$(grep -E '^\- \*\*RevisionID\*\*: ' "$REPORT_FILE" | sed -E 's/.*: (.+)/\1/' || echo "")
+fi
+REVISION_ID=${REVISION_ID:-"N/A"}
 CREATED_MATCH=$(grep "Created vs NewLinks" "$REPORT_FILE" | sed -E 's/.*→ \*\*(.+)\*\*/\1/')
 UPDATED_MATCH=$(grep "Updated vs UpdatedLinks" "$REPORT_FILE" | sed -E 's/.*→ \*\*(.+)\*\*/\1/')
 
@@ -59,7 +64,7 @@ cat <<EOF | curl -fsS -X POST -H 'Content-type: application/json' -d @- "$SLACK_
       "elements": [
         {
           "type": "mrkdwn",
-          "text": "_Report file:_ \`$REPORT_FILE\`"
+          "text": "*RevisionID:* \`$REVISION_ID\`\n_Report file:_ \`$REPORT_FILE\`"
         }
       ]
     }
