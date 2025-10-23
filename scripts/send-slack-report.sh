@@ -83,7 +83,7 @@ cat <<EOF | curl -fsS -X POST -H 'Content-type: application/json' -d @- "$SLACK_
       "elements": [
         {
           "type": "mrkdwn",
-          "text": "*RevisionID:* \`$REVISION_ID\`\n_Report file:_ \`$REPORT_FILE\`${DASHBOARD_LINE}"
+          "text": "_RevisionID:_ \`$REVISION_ID\`\n_Report file:_ \`$REPORT_FILE\`${DASHBOARD_LINE}"
         }
       ]
     }
