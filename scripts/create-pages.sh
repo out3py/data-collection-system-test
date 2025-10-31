@@ -2,6 +2,10 @@
 
 set -e
 
+# Source content templates library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/content-templates.sh"
+
 TIMESTAMP=$(date +%s)
 CONTENT_ID="content-${TIMESTAMP}"
 DAY_DIR="daily_pages/${CONTENT_ID}"
@@ -12,30 +16,11 @@ NUM_CREATED=$((1 + RANDOM % 3))
 NUM_UPDATE=$((1 + RANDOM % 3))
 NUM_DELETE=$((1 + RANDOM % 3))
 
-generate_random_words() {
-    local lorem_file="lorem_words.txt"
-    if [ ! -f "${lorem_file}" ]; then
-        echo "Error: ${lorem_file} not found"
-        exit 1
-    fi
-    
-    local words_array=($(cat "${lorem_file}"))
-    local total_words=${#words_array[@]}
-    
-    local random_words=""
-    for i in {1..35}; do
-        local random_index=$((RANDOM % total_words))
-        random_words="${random_words}${words_array[$random_index]} "
-    done
-    
-    echo "${random_words}"
-}
-
 for i in $(seq 1 ${NUM_CREATED}); do
     FILENAME="${DAY_DIR}/created_page_${i}.md"
     CREATED_DATE=$(date '+%Y-%m-%d %H:%M:%S')
     
-    RANDOM_WORDS=$(generate_random_words)
+    PAGE_CONTENT=$(generate_blog_content "$i")
     
     cat > "${FILENAME}" << EOF
 ---
@@ -44,7 +29,7 @@ title: "Created Page ${i}"
 created_date: "${CREATED_DATE}"
 ---
 
-${RANDOM_WORDS}
+${PAGE_CONTENT}
 EOF
 
     echo "Created: ${FILENAME}"
@@ -54,7 +39,7 @@ for i in $(seq 1 ${NUM_UPDATE}); do
     FILENAME="${DAY_DIR}/update_page_${i}.md"
     CREATED_DATE=$(date '+%Y-%m-%d %H:%M:%S')
     
-    RANDOM_WORDS=$(generate_random_words)
+    PAGE_CONTENT=$(generate_blog_content "$i")
     
     cat > "${FILENAME}" << EOF
 ---
@@ -63,7 +48,7 @@ title: "Update Page ${i}"
 created_date: "${CREATED_DATE}"
 ---
 
-${RANDOM_WORDS}
+${PAGE_CONTENT}
 EOF
 
     echo "Created: ${FILENAME}"
@@ -73,7 +58,7 @@ for i in $(seq 1 ${NUM_DELETE}); do
     FILENAME="${DAY_DIR}/delete_page_${i}.md"
     CREATED_DATE=$(date '+%Y-%m-%d %H:%M:%S')
     
-    RANDOM_WORDS=$(generate_random_words)
+    PAGE_CONTENT=$(generate_blog_content "$i")
     
     cat > "${FILENAME}" << EOF
 ---
@@ -82,7 +67,7 @@ title: "Delete Page ${i}"
 created_date: "${CREATED_DATE}"
 ---
 
-${RANDOM_WORDS}
+${PAGE_CONTENT}
 EOF
 
     echo "Created: ${FILENAME}"

@@ -2,6 +2,10 @@
 
 set -e
 
+# Source content templates library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/content-templates.sh"
+
 PREV_DIR=$(find daily_pages -mindepth 1 -maxdepth 1 -type d | sort | tail -n 1)
 
 if [ -z "${PREV_DIR}" ] || [ ! -d "${PREV_DIR}" ]; then
@@ -11,37 +15,20 @@ fi
 
 UPDATED_COUNT=0
 
-generate_random_words() {
-    local lorem_file="lorem_words.txt"
-    if [ ! -f "${lorem_file}" ]; then
-        echo "Error: ${lorem_file} not found"
-        exit 1
-    fi
-    
-    local words_array=($(cat "${lorem_file}"))
-    local total_words=${#words_array[@]}
-    
-    local random_words=""
-    for i in {1..35}; do
-        local random_index=$((RANDOM % total_words))
-        random_words="${random_words}${words_array[$random_index]} "
-    done
-    
-    echo "${random_words}"
-}
-
 for UPDATE_FILE in "${PREV_DIR}"/update_page_*.md; do
     if [ ! -f "${UPDATE_FILE}" ]; then
         continue
     fi
     
-    RANDOM_WORDS=$(generate_random_words)
+    # Extract front matter (only the first YAML block between ---)
+    FRONT_MATTER=$(sed -n '1,/^---$/p' "${UPDATE_FILE}")
     
-    FRONT_MATTER=$(sed -n '/^---$/,/^---$/p' "${UPDATE_FILE}")
+    # Generate updated content using meaningful update strategies
+    UPDATED_CONTENT=$(generate_content_update "${UPDATE_FILE}")
     
+    # Write updated file with front matter preserved
     echo "${FRONT_MATTER}" > "${UPDATE_FILE}"
-    echo "" >> "${UPDATE_FILE}"
-    echo "${RANDOM_WORDS}" >> "${UPDATE_FILE}"
+    echo -e "${UPDATED_CONTENT}" >> "${UPDATE_FILE}"
     
     echo "Updated: ${UPDATE_FILE}"
     UPDATED_COUNT=$((UPDATED_COUNT + 1))
