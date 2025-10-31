@@ -2,7 +2,8 @@ name: Daily Content Management
 
 on:
   schedule:
-    - cron: '0 0 * * *' #  At the end of every day
+    - cron: '0 6 * * *' # 9 AM Moscow time (UTC+3)
+  workflow_dispatch: # Allow manual triggering from GitHub Actions UI
   repository_dispatch:
     types: [daily-content-trigger]
 
@@ -32,3 +33,4 @@ jobs:
           git add .
           git diff --staged --quiet || git commit -m "Daily content management - $(date +%Y-%m-%d)"
           git push
+
