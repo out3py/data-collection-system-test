@@ -8,9 +8,9 @@ DAY_DIR="daily_pages/${CONTENT_ID}"
 
 mkdir -p "${DAY_DIR}"
 
-NUM_CREATED=$((1 + RANDOM % 3))
-NUM_UPDATE=$((1 + RANDOM % 3))
-NUM_DELETE=$((1 + RANDOM % 3))
+NUM_CREATED=$((1 + RANDOM % 10))
+NUM_UPDATE=$((1 + RANDOM % 10))
+NUM_DELETE=0
 
 generate_random_words() {
     local lorem_file="lorem_words.txt"
@@ -49,6 +49,7 @@ for i in $(seq 1 ${NUM_CREATED}); do
 layout: page
 title: "Created Page ${i}"
 created_date: "${CREATED_DATE}"
+permalink: /created_page_${i}.html
 ---
 
 ${RANDOM_WORDS}
@@ -68,6 +69,7 @@ for i in $(seq 1 ${NUM_UPDATE}); do
 layout: page
 title: "Update Page ${i}"
 created_date: "${CREATED_DATE}"
+permalink: /update_page_${i}.html
 ---
 
 ${RANDOM_WORDS}
@@ -76,25 +78,7 @@ EOF
     echo "Created: ${FILENAME}"
 done
 
-for i in $(seq 1 ${NUM_DELETE}); do
-    FILENAME="${DAY_DIR}/delete_page_${i}.md"
-    CREATED_DATE=$(date '+%Y-%m-%d %H:%M:%S')
-    
-    RANDOM_WORDS=$(generate_random_words)
-    
-    cat > "${FILENAME}" << EOF
----
-layout: page
-title: "Delete Page ${i}"
-created_date: "${CREATED_DATE}"
----
-
-${RANDOM_WORDS}
-EOF
-
-    echo "Created: ${FILENAME}"
-done
-
-TOTAL=$((NUM_CREATED + NUM_UPDATE + NUM_DELETE))
+# Delete pages are disabled - not creating delete_page_*.md files
+TOTAL=$((NUM_CREATED + NUM_UPDATE))
 echo "${TOTAL}"
 

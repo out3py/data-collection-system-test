@@ -17,17 +17,13 @@ fi
 echo "Updated ${UPDATED_COUNT} pages"
 echo ""
 
-echo "Step 2: Deleting files with delete_ prefix from previous run..."
-DELETED_OUTPUT=$(bash scripts/delete-pages.sh)
-DELETED_COUNT=$(echo "${DELETED_OUTPUT}" | tail -1)
-DELETED_FILES=$(echo "${DELETED_OUTPUT}" | grep "Deleted:" | sed 's/Deleted: /- /' || echo "- None")
-if [ -z "${DELETED_FILES}" ] || [ "${DELETED_FILES}" = "- " ]; then
-    DELETED_FILES="- None"
-fi
+echo "Step 2: Deleting files (disabled)..."
+DELETED_COUNT=0
+DELETED_FILES="- None"
 echo "Deleted ${DELETED_COUNT} files"
 echo ""
 
-echo "Step 3: Creating new pages (created_, update_, delete_)..."
+echo "Step 3: Creating new pages (created_, update_)..."
 CREATED_OUTPUT=$(bash scripts/create-pages.sh)
 CREATED_COUNT=$(echo "${CREATED_OUTPUT}" | tail -1)
 CREATED_FILES=$(echo "${CREATED_OUTPUT}" | grep "Created:" | sed 's/Created: /- /' || echo "- None")
