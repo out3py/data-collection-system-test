@@ -22,13 +22,20 @@ generate_random_words() {
     local words_array=($(cat "${lorem_file}"))
     local total_words=${#words_array[@]}
     
+    # Generate much richer content - multiple paragraphs with many words
     local random_words=""
-    for i in {1..35}; do
-        local random_index=$((RANDOM % total_words))
-        random_words="${random_words}${words_array[$random_index]} "
+    local num_paragraphs=$((5 + RANDOM % 10))  # 5-14 paragraphs
+    
+    for para in $(seq 1 ${num_paragraphs}); do
+        local words_per_para=$((50 + RANDOM % 100))  # 50-150 words per paragraph
+        for i in $(seq 1 ${words_per_para}); do
+            local random_index=$((RANDOM % total_words))
+            random_words="${random_words}${words_array[$random_index]} "
+        done
+        random_words="${random_words}\n\n"
     done
     
-    echo "${random_words}"
+    echo -e "${random_words}"
 }
 
 for i in $(seq 1 ${NUM_CREATED}); do
