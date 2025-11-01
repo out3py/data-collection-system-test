@@ -6,8 +6,7 @@ layout: home
 
 # Daily Pages
 
-{% for page in site.pages %}
-{% if page.path contains 'daily_pages' %}
+{% assign daily_pages_list = site.pages | where_exp: "item", "item.path contains 'daily_pages'" %}
+{% for page in daily_pages_list %}
 - [{{ page.title }}]({{ page.url | relative_url }})
-{% endif %}
 {% endfor %}
