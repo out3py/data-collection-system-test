@@ -6,8 +6,8 @@ layout: home
 
 # Daily Pages
 
-{% for file in site.static_files %}
-{% if file.path contains 'daily_pages' %}
-- [{{ file.path }}]({{ file.path }})
-  {% endif %}
-  {% endfor %}
+{% for page in site.pages %}
+{% if page.path contains 'daily_pages' %}
+- [{{ page.title }}]({{ page.url | relative_url }})
+{% endif %}
+{% endfor %}
