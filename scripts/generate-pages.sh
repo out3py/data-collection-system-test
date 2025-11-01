@@ -149,6 +149,25 @@ EOF
     done
 fi
 
+# Count copied pages (for statistics)
+NUM_COPIED=0
+if [ "${IS_FIRST_REVISION}" = "false" ] && [ -d "${DAY_DIR}" ]; then
+    # Count files that were copied but not updated
+    for prev_file in "${PREV_DIR}"/*.md; do
+        if [ ! -f "${prev_file}" ]; then
+            continue
+        fi
+        PREV_BASENAME=$(basename "${prev_file}" .md)
+        FILENAME="${DAY_DIR}/${PREV_BASENAME}.md"
+        # If file exists but wasn't in update output, it was copied
+        if [ -f "${FILENAME}" ]; then
+            NUM_COPIED=$((NUM_COPIED + 1))
+        fi
+    done
+    # Subtract updated pages from copied count
+    NUM_COPIED=$((NUM_COPIED - NUM_UPDATED))
+fi
+
 # Now create new pages
 # Find max page number from previous directory + updated files
 MAX_PAGE_NUM=0
@@ -214,6 +233,7 @@ EOF
     PAGE_NUM=$((PAGE_NUM + 1))
 done
 
-TOTAL=$((NUM_NEW + NUM_UPDATED))
+# Total pages in this revision = new + updated + copied
+TOTAL=$((NUM_NEW + NUM_UPDATED + NUM_COPIED))
 echo "${TOTAL}"
 
