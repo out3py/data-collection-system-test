@@ -128,6 +128,25 @@ EOF
         echo "Updated: ${FILENAME} (preserved permalink: ${PERMALINK})"
         UPDATE_COUNTER=$((UPDATE_COUNTER + 1))
     done
+    
+    # Copy remaining pages that weren't updated (preserve all pages from previous revision)
+    for prev_file in "${PREV_DIR}"/*.md; do
+        if [ ! -f "${prev_file}" ]; then
+            continue
+        fi
+        
+        PREV_BASENAME=$(basename "${prev_file}" .md)
+        FILENAME="${DAY_DIR}/${PREV_BASENAME}.md"
+        
+        # Skip if already updated
+        if [ -f "${FILENAME}" ]; then
+            continue
+        fi
+        
+        # Copy the file as-is (preserve content and metadata)
+        cp "${prev_file}" "${FILENAME}"
+        echo "Copied: ${FILENAME} (preserved from previous revision)"
+    done
 fi
 
 # Now create new pages
