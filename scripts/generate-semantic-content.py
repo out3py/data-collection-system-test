@@ -184,17 +184,21 @@ def generate_update(existing_content: str, update_type: str = 'auto') -> str:
         return '\n\n'.join(existing_lines) + '\n\n' + '\n\n'.join(new_paragraphs)
     
     elif update_type == 'refine':
-        # Modify some paragraphs with more detail, keep others
+        # Modify some paragraphs with more detail, keep others - preserve most of original content
         paragraphs = existing_lines.copy()
         if paragraphs:
-            # Refine first 1-2 paragraphs
-            num_to_refine = min(random.randint(1, 2), len(paragraphs))
+            # Refine only 1 paragraph, keep all others unchanged
+            num_to_refine = min(1, len(paragraphs))
             for idx in range(num_to_refine):
-                paragraphs[idx] = generate_paragraph(detected_category, detected_keywords, random.randint(5, 8))
+                # Keep original paragraph structure but enhance it
+                original = paragraphs[idx]
+                # Add a new enhanced paragraph, but keep most original
+                enhanced = original + ' ' + generate_paragraph(detected_category, detected_keywords, random.randint(2, 3))
+                paragraphs[idx] = enhanced
         return '\n\n'.join(paragraphs)
     
     elif update_type == 'add_section':
-        # Add a new section header and content (preserve existing)
+        # Add a new section header and content (preserve ALL existing content)
         section_titles = [
             '## Recent Developments',
             '## Looking Ahead',
@@ -209,15 +213,18 @@ def generate_update(existing_content: str, update_type: str = 'auto') -> str:
         return '\n\n'.join(existing_lines) + '\n\n' + new_section.strip()
     
     elif update_type == 'update':
-        # Update some paragraphs with new information, keep others
+        # Update some paragraphs with new information, keep others - preserve most content
         paragraphs = existing_lines.copy()
         if paragraphs:
-            # Update 30-50% of paragraphs
-            num_to_update = max(1, len(paragraphs) // 3)
+            # Update only 1-2 paragraphs, keep all others unchanged
+            num_to_update = min(random.randint(1, 2), len(paragraphs))
             if num_to_update < len(paragraphs):
                 indices_to_update = random.sample(range(len(paragraphs)), num_to_update)
                 for idx in indices_to_update:
-                    paragraphs[idx] = generate_paragraph(detected_category, detected_keywords, random.randint(4, 7))
+                    # Append new information to existing paragraph instead of replacing
+                    original = paragraphs[idx]
+                    new_info = generate_paragraph(detected_category, detected_keywords, random.randint(2, 3))
+                    paragraphs[idx] = original + ' ' + new_info
         return '\n\n'.join(paragraphs)
     
     return '\n\n'.join(existing_lines)
