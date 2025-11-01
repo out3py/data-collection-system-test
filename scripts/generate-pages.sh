@@ -233,7 +233,7 @@ EOF
     PAGE_NUM=$((PAGE_NUM + 1))
 done
 
-# Total pages in this revision = new + updated + copied
-TOTAL=$((NUM_NEW + NUM_UPDATED + NUM_COPIED))
-echo "${TOTAL}"
+# Output counts separately for proper statistics
+# Format: NEW_COUNT:UPDATED_COUNT:COPIED_COUNT:TOTAL
+echo "${NUM_NEW}:${NUM_UPDATED}:${NUM_COPIED}:$((NUM_NEW + NUM_UPDATED + NUM_COPIED))"
 
