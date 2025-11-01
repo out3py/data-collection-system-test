@@ -30,6 +30,7 @@ exclude:
 
 include:
   - daily_pages
+  - _plugins
 
 defaults:
   - scope:
