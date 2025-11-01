@@ -30,7 +30,23 @@ else
 fi
 
 CREATED_MATCH=$([[ "${FILES_CREATED}" -eq "${NEW_LINKS}" ]] && echo "OK" || echo "MISMATCH")
-UPDATED_MATCH=$([[ "${FILES_UPDATED}" -eq "${UPDATED_LINKS}" ]] && echo "OK" || echo "MISMATCH")
+
+# Account for landing page update when new links are added
+# When new links are detected, the landing page (index.md) is also updated
+# So we need to add 1 to FILES_UPDATED for comparison if there are new links
+EXPECTED_UPDATED=${FILES_UPDATED}
+if [[ ${NEW_LINKS} -gt 0 ]]; then
+    EXPECTED_UPDATED=$((FILES_UPDATED + 1))
+fi
+
+UPDATED_MATCH=$([[ "${EXPECTED_UPDATED}" -eq "${UPDATED_LINKS}" ]] && echo "OK" || echo "MISMATCH")
+
+# Build description for updated comparison
+if [[ ${NEW_LINKS} -gt 0 ]]; then
+    UPDATED_DESC="${EXPECTED_UPDATED} (${FILES_UPDATED} files + 1 landing page)"
+else
+    UPDATED_DESC="${EXPECTED_UPDATED}"
+fi
 
 TS=$(date '+%Y-%m-%d %H:%M:%S')
 TS_ID=$(date '+%Y%m%d-%H%M%S')
@@ -57,7 +73,7 @@ title: "Restart Revision Compare ${TS_ID}"
 
 ## Comparison
 - Created vs NewLinks: **${FILES_CREATED}** ?= **${NEW_LINKS}** → **${CREATED_MATCH}**
-- Updated vs UpdatedLinks: **${FILES_UPDATED}** ?= **${UPDATED_LINKS}** → **${UPDATED_MATCH}**
+- Updated vs UpdatedLinks: **${UPDATED_DESC}** ?= **${UPDATED_LINKS}** → **${UPDATED_MATCH}**
 
 ---
 EOF
