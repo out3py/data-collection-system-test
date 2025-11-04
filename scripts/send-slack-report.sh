@@ -27,6 +27,14 @@ REVISION_ID=${REVISION_ID:-"N/A"}
 CREATED_MATCH=$(grep "Created vs NewLinks" "$REPORT_FILE" | sed -E 's/.*→ \*\*(.+)\*\*/\1/')
 UPDATED_MATCH=$(grep "Updated vs UpdatedLinks" "$REPORT_FILE" | sed -E 's/.*→ \*\*(.+)\*\*/\1/')
 
+# Account for landing page update when new links are added
+# When new links are detected, the landing page (index.md) is also updated
+# So we need to add 1 to FILES_UPDATED for comparison if there are new links
+EXPECTED_UPDATED=${FILES_UPDATED}
+if [[ ${NEW_LINKS} -gt 0 ]]; then
+    EXPECTED_UPDATED=$((FILES_UPDATED + 1))
+fi
+
 if [ "$CREATED_MATCH" = "OK" ]; then
   CREATED_EMOJI=":white_check_mark:"
 else
@@ -72,7 +80,7 @@ cat <<EOF | curl -fsS -X POST -H 'Content-type: application/json' -d @- "$SLACK_
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "*Comparison Results:*\n${CREATED_EMOJI} *Created vs NewLinks:* \`${FILES_CREATED}\` vs \`${NEW_LINKS}\` → *${CREATED_MATCH}*\n${UPDATED_EMOJI} *Updated vs UpdatedLinks:* \`${FILES_UPDATED}\` vs \`${UPDATED_LINKS}\` → *${UPDATED_MATCH}*"
+        "text": "*Comparison Results:*\n${CREATED_EMOJI} *Created vs NewLinks:* \`${FILES_CREATED}\` vs \`${NEW_LINKS}\` → *${CREATED_MATCH}*\n${UPDATED_EMOJI} *Updated vs UpdatedLinks:* \`${EXPECTED_UPDATED}\` vs \`${UPDATED_LINKS}\` → *${UPDATED_MATCH}*"
       }
     },
     {
