@@ -1,0 +1,21 @@
+name: Trigger report for auto-test
+
+on:
+  schedule:
+    - cron: '10 6 * * *'  # 9:10 AM Moscow time (UTC+3)
+
+jobs:
+  trigger:
+    name: Trigger report
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Trigger report for test site (QA only)
+        env:
+          QA_REPORT_FORCE_URL: ${{ secrets.QA_REPORT_FORCE_URL }}
+        run: |
+          curl -fsS --retry 3 --max-time 20 \
+            -H "X-Auth-Request-User: github-actions" \
+            -H "X-Auth-Request-Email: gitactions@outspy.net" \
+            "$QA_REPORT_FORCE_URL"
+

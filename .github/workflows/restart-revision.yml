@@ -1,0 +1,20 @@
+name: Restart revision for auto-test
+
+on:
+  schedule:
+    - cron: '25 6 * * *'  # 9:25 AM Moscow time (UTC+3)
+
+jobs:
+  trigger:
+    name: Restart revision
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Restart revision for test site (QA only)
+        env:
+          QA_REVISION_RESTART_URL: ${{ secrets.QA_REVISION_RESTART_URL }}
+        run: |
+          curl -fsS --retry 3 --max-time 20 \
+            -H "X-Auth-Request-User: github-actions" \
+            -H "X-Auth-Request-Email: gitactions@outspy.net" \
+            "$QA_REVISION_RESTART_URL"
