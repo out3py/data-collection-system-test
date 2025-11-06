@@ -15,7 +15,7 @@ jobs:
           QA_REPORT_FORCE_URL: ${{ secrets.QA_REPORT_FORCE_URL }}
         run: |
           curl -fsS --retry 3 --max-time 20 \
-            -H "X-Auth-Request-User: github-actions" \
-            -H "X-Auth-Request-Email: gitactions@outspy.net" \
+            -H "X-Auth-Request-User: ${{ secrets.ACTIONS_USER }}" \
+            -H "X-Auth-Request-Email: ${{ secrets.ACTIONS_EMAIL }}" \
             "$QA_REPORT_FORCE_URL"
 
