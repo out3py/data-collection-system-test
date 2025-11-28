@@ -2,6 +2,14 @@
 
 # Generate content pages
 # Creates new pages with unique permalinks and updates existing pages preserving their permalinks
+#
+# For system testing with random number of pages (0 to MAX):
+#   NUM_PAGES=500 bash scripts/generate-pages.sh  # Random 0-500 pages
+#   or
+#   export NUM_PAGES=500
+#   bash scripts/generate-pages.sh
+#
+# Default: Random 0-10 pages (each run will have different count)
 
 set -e
 
@@ -21,7 +29,10 @@ fi
 # Now create the new directory
 mkdir -p "${DAY_DIR}"
 
-NUM_NEW=$((3 + RANDOM % 7))  # 3-9 new pages
+# Generate random number of pages for system test (0-10 by default)
+# Default max is 10 pages, but allow override via NUM_PAGES environment variable
+MAX_PAGES=${NUM_PAGES:-10}  # Maximum pages (default: 10)
+NUM_NEW=$((RANDOM % (MAX_PAGES + 1)))  # Random 0 to MAX_PAGES
 NUM_UPDATED=0
 
 # Only update pages if NOT first revision
@@ -29,8 +40,18 @@ if [ "${IS_FIRST_REVISION}" = "false" ]; then
     # Count existing files in previous directory
     EXISTING_COUNT=$(find "${PREV_DIR}" -name "*.md" -type f 2>/dev/null | wc -l | tr -d ' ')
     if [ ${EXISTING_COUNT} -gt 0 ]; then
-        # Update about half of existing pages
-        NUM_UPDATED=$((1 + EXISTING_COUNT / 2))
+        # For system testing: update random number (0 to half of NUM_NEW) if enough pages exist
+        # Otherwise update half of existing pages
+        HALF_NUM_NEW=$((NUM_NEW / 2))
+        HALF_EXISTING=$((1 + EXISTING_COUNT / 2))
+        
+        # If we have enough existing pages, update random amount up to half of NUM_NEW
+        if [ ${EXISTING_COUNT} -ge ${HALF_NUM_NEW} ] && [ ${HALF_NUM_NEW} -gt 0 ]; then
+            # Random between 0 and HALF_NUM_NEW
+            NUM_UPDATED=$((RANDOM % (HALF_NUM_NEW + 1)))
+        else
+            NUM_UPDATED=${HALF_EXISTING}  # Update half of existing (if fewer than half of NUM_NEW exist)
+        fi
     fi
 fi
 
@@ -77,6 +98,7 @@ generate_semantic_update() {
 # Update existing pages FIRST (only if not first revision)
 # This needs to happen before creating new pages to preserve numbering
 if [ "${IS_FIRST_REVISION}" = "false" ] && [ ${NUM_UPDATED} -gt 0 ]; then
+    echo "Random count: Updating ${NUM_UPDATED} existing pages..."
     UPDATE_COUNTER=0
     for prev_file in "${PREV_DIR}"/*.md; do
         # Skip if not a regular file or we've reached the update limit
@@ -125,9 +147,13 @@ permalink: ${PERMALINK}
 ${SEMANTIC_CONTENT}
 EOF
 
-        echo "Updated: ${FILENAME} (preserved permalink: ${PERMALINK})"
+        # Show progress every 50 pages or on last page
         UPDATE_COUNTER=$((UPDATE_COUNTER + 1))
+        if [ $((UPDATE_COUNTER % 50)) -eq 0 ] || [ ${UPDATE_COUNTER} -eq ${NUM_UPDATED} ]; then
+            echo "Updated: ${UPDATE_COUNTER}/${NUM_UPDATED} pages (latest: ${FILENAME})"
+        fi
     done
+    echo "Finished updating ${NUM_UPDATED} pages"
     
     # Copy remaining pages that weren't updated (preserve all pages from previous revision)
     for prev_file in "${PREV_DIR}"/*.md; do
@@ -208,17 +234,21 @@ NEXT_PAGE_NUM=$((MAX_PAGE_NUM + 1))
 # Create new pages
 # Use simple sequential numbering for permalinks
 PAGE_NUM=${NEXT_PAGE_NUM}
-for i in $(seq 1 ${NUM_NEW}); do
-    # Simple filename with index
-    FILENAME="${DAY_DIR}/page_${PAGE_NUM}.md"
-    CREATED_DATE=$(date '+%Y-%m-%d %H:%M:%S')
-    
-    # Simple permalink: page_1, page_2, etc.
-    PERMALINK="/page_${PAGE_NUM}.html"
-    
-    SEMANTIC_CONTENT=$(generate_semantic_content)
-    
-    cat > "${FILENAME}" << EOF
+if [ ${NUM_NEW} -eq 0 ]; then
+    echo "Random count: 0 new pages (skipping creation)"
+else
+    echo "Random count: Generating ${NUM_NEW} new pages (random 0-${MAX_PAGES})..."
+    for i in $(seq 1 ${NUM_NEW}); do
+        # Simple filename with index
+        FILENAME="${DAY_DIR}/page_${PAGE_NUM}.md"
+        CREATED_DATE=$(date '+%Y-%m-%d %H:%M:%S')
+        
+        # Simple permalink: page_1, page_2, etc.
+        PERMALINK="/page_${PAGE_NUM}.html"
+        
+        SEMANTIC_CONTENT=$(generate_semantic_content)
+        
+        cat > "${FILENAME}" << EOF
 ---
 layout: page
 title: "Page ${PAGE_NUM}"
@@ -229,9 +259,14 @@ permalink: ${PERMALINK}
 ${SEMANTIC_CONTENT}
 EOF
 
-    echo "Created: ${FILENAME}"
-    PAGE_NUM=$((PAGE_NUM + 1))
-done
+        # Show progress every 50 pages or on last page
+        if [ $((i % 50)) -eq 0 ] || [ ${i} -eq ${NUM_NEW} ]; then
+            echo "Created: ${i}/${NUM_NEW} pages (latest: ${FILENAME})"
+        fi
+        PAGE_NUM=$((PAGE_NUM + 1))
+    done
+    echo "Finished generating ${NUM_NEW} new pages"
+fi
 
 # Output counts separately for proper statistics
 # Format: NEW_COUNT:UPDATED_COUNT:COPIED_COUNT:TOTAL
