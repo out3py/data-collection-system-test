@@ -22,8 +22,12 @@ echo ""
 
 echo "Step 3: Generating new and updated pages..."
 CREATED_OUTPUT=$(bash scripts/generate-pages.sh)
-CREATED_FILES=$(echo "${CREATED_OUTPUT}" | grep "Created:" | sed 's/Created: /- /' || echo "- None")
-UPDATED_FILES=$(echo "${CREATED_OUTPUT}" | grep "Updated:" | sed 's/Updated: /- /' || echo "- None")
+# Collect all created files (filter out progress lines like "Created: X/Y pages (latest: ...)")
+# Keep only lines that are actual file paths (contain "daily_pages/") and don't contain "pages (latest:"
+CREATED_FILES=$(echo "${CREATED_OUTPUT}" | grep "^Created:" | grep "daily_pages/" | grep -v "pages (latest:" | sed 's/Created: /- /' || echo "- None")
+# Collect all updated files (filter out progress lines like "Updated: X/Y pages (latest: ...)")
+# Keep only lines that are actual file paths (contain "daily_pages/") and don't contain "pages (latest:"
+UPDATED_FILES=$(echo "${CREATED_OUTPUT}" | grep "^Updated:" | grep "daily_pages/" | grep -v "pages (latest:" | sed 's/Updated: /- /' || echo "- None")
 COPIED_FILES=$(echo "${CREATED_OUTPUT}" | grep "Copied:" | sed 's/Copied: /- /' || echo "- None")
 
 # Parse counts from the last line (format: NEW:UPDATED:COPIED:TOTAL)

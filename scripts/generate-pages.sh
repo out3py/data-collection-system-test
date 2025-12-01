@@ -26,34 +26,40 @@ if [ -z "${PREV_DIR}" ] || [ ! -d "${PREV_DIR}" ]; then
     IS_FIRST_REVISION=true
 fi
 
-# Now create the new directory
-mkdir -p "${DAY_DIR}"
-
 # Generate random number of pages for system test (0-10 by default)
 # Default max is 10 pages, but allow override via NUM_PAGES environment variable
 MAX_PAGES=${NUM_PAGES:-10}  # Maximum pages (default: 10)
-NUM_NEW=$((RANDOM % (MAX_PAGES + 1)))  # Random 0 to MAX_PAGES
+# Allow NUM_NEW to be set via environment variable, otherwise generate random
+NUM_NEW=${NUM_NEW:-$((RANDOM % (MAX_PAGES + 1)))}  # Random 0 to MAX_PAGES if not set
 NUM_UPDATED=0
 
-# Only update pages if NOT first revision
+# Calculate NUM_UPDATED if not first revision
 if [ "${IS_FIRST_REVISION}" = "false" ]; then
     # Count existing files in previous directory
     EXISTING_COUNT=$(find "${PREV_DIR}" -name "*.md" -type f 2>/dev/null | wc -l | tr -d ' ')
     if [ ${EXISTING_COUNT} -gt 0 ]; then
-        # For system testing: update random number (0 to half of NUM_NEW) if enough pages exist
-        # Otherwise update half of existing pages
-        HALF_NUM_NEW=$((NUM_NEW / 2))
-        HALF_EXISTING=$((1 + EXISTING_COUNT / 2))
-        
-        # If we have enough existing pages, update random amount up to half of NUM_NEW
-        if [ ${EXISTING_COUNT} -ge ${HALF_NUM_NEW} ] && [ ${HALF_NUM_NEW} -gt 0 ]; then
-            # Random between 0 and HALF_NUM_NEW
-            NUM_UPDATED=$((RANDOM % (HALF_NUM_NEW + 1)))
+        HALF_EXISTING=$((EXISTING_COUNT / 2))
+        if [ ${HALF_EXISTING} -gt 0 ]; then
+            # Random between 0 and HALF_EXISTING (can be 0)
+            NUM_UPDATED=$((RANDOM % (HALF_EXISTING + 1)))
         else
-            NUM_UPDATED=${HALF_EXISTING}  # Update half of existing (if fewer than half of NUM_NEW exist)
+            NUM_UPDATED=0
         fi
     fi
 fi
+
+# If both NUM_NEW and NUM_UPDATED are 0, skip creating new directory and exit early
+# This prevents Jekyll from regenerating pages with empty content
+if [ ${NUM_NEW} -eq 0 ] && [ ${NUM_UPDATED} -eq 0 ]; then
+    echo "Skipping revision creation: NUM_NEW=0 and NUM_UPDATED=0 (no changes)"
+    echo "Previous revision directory will continue to be served: ${PREV_DIR}"
+    echo "0:0:0:0"  # Output counts: NEW_COUNT:UPDATED_COUNT:COPIED_COUNT:TOTAL
+    exit 0
+fi
+
+# Now create the new directory (only if we have changes)
+mkdir -p "${DAY_DIR}"
+
 
 generate_semantic_content() {
     local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -100,6 +106,7 @@ generate_semantic_update() {
 if [ "${IS_FIRST_REVISION}" = "false" ] && [ ${NUM_UPDATED} -gt 0 ]; then
     echo "Random count: Updating ${NUM_UPDATED} existing pages..."
     UPDATE_COUNTER=0
+    UPDATED_FILES_LIST=""
     for prev_file in "${PREV_DIR}"/*.md; do
         # Skip if not a regular file or we've reached the update limit
         if [ ! -f "${prev_file}" ]; then
@@ -147,13 +154,26 @@ permalink: ${PERMALINK}
 ${SEMANTIC_CONTENT}
 EOF
 
-        # Show progress every 50 pages or on last page
+        # Collect all updated files for output
         UPDATE_COUNTER=$((UPDATE_COUNTER + 1))
+        if [ -z "${UPDATED_FILES_LIST}" ]; then
+            UPDATED_FILES_LIST="${FILENAME}"
+        else
+            UPDATED_FILES_LIST="${UPDATED_FILES_LIST}"$'\n'"${FILENAME}"
+        fi
+        
+        # Show progress every 50 pages or on last page
         if [ $((UPDATE_COUNTER % 50)) -eq 0 ] || [ ${UPDATE_COUNTER} -eq ${NUM_UPDATED} ]; then
             echo "Updated: ${UPDATE_COUNTER}/${NUM_UPDATED} pages (latest: ${FILENAME})"
         fi
     done
     echo "Finished updating ${NUM_UPDATED} pages"
+    # Output all updated files, one per line
+    echo "${UPDATED_FILES_LIST}" | while IFS= read -r file; do
+        if [ -n "${file}" ]; then
+            echo "Updated: ${file}"
+        fi
+    done
     
     # Copy remaining pages that weren't updated (preserve all pages from previous revision)
     for prev_file in "${PREV_DIR}"/*.md; do
@@ -234,6 +254,7 @@ NEXT_PAGE_NUM=$((MAX_PAGE_NUM + 1))
 # Create new pages
 # Use simple sequential numbering for permalinks
 PAGE_NUM=${NEXT_PAGE_NUM}
+CREATED_FILES_LIST=""
 if [ ${NUM_NEW} -eq 0 ]; then
     echo "Random count: 0 new pages (skipping creation)"
 else
@@ -259,6 +280,13 @@ permalink: ${PERMALINK}
 ${SEMANTIC_CONTENT}
 EOF
 
+        # Collect all created files for output
+        if [ -z "${CREATED_FILES_LIST}" ]; then
+            CREATED_FILES_LIST="${FILENAME}"
+        else
+            CREATED_FILES_LIST="${CREATED_FILES_LIST}"$'\n'"${FILENAME}"
+        fi
+        
         # Show progress every 50 pages or on last page
         if [ $((i % 50)) -eq 0 ] || [ ${i} -eq ${NUM_NEW} ]; then
             echo "Created: ${i}/${NUM_NEW} pages (latest: ${FILENAME})"
@@ -266,6 +294,12 @@ EOF
         PAGE_NUM=$((PAGE_NUM + 1))
     done
     echo "Finished generating ${NUM_NEW} new pages"
+    # Output all created files, one per line
+    echo "${CREATED_FILES_LIST}" | while IFS= read -r file; do
+        if [ -n "${file}" ]; then
+            echo "Created: ${file}"
+        fi
+    done
 fi
 
 # Output counts separately for proper statistics
