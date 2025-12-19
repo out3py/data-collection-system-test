@@ -49,7 +49,7 @@ is_first_run() {
 # Account for Jekyll's automatic generation of feed.xml and home_page (index.html)
 # Extract EXPECTED_UPDATED from report file if available, otherwise calculate it
 # Try to extract from the Updated vs UpdatedLinks line first
-EXPECTED_UPDATED=$(grep "Updated vs UpdatedLinks" "$REPORT_FILE" | sed -E 's/.*Updated vs UpdatedLinks: \*\*([0-9]+).*/\1/' | head -1)
+EXPECTED_UPDATED=$(grep "Updated vs UpdatedLinks" "$REPORT_FILE" | sed -E 's/.*\*\*([0-9]+).*/\1/' | head -1)
 if [[ -z "${EXPECTED_UPDATED}" ]] || ! [[ "${EXPECTED_UPDATED}" =~ ^[0-9]+$ ]]; then
     # Fallback: Calculate based on same logic as compare.sh
     EXPECTED_UPDATED=${FILES_UPDATED}
