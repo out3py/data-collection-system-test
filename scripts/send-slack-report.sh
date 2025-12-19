@@ -2,79 +2,62 @@
 
 set -euo pipefail
 
-die() {
-  echo "Error: $*" >&2
-  exit 1
-}
-
-extract_first_match() {
-  local grep_regex="$1"
-  local sed_expr="$2"
-  local file="$3"
-  grep -m 1 -E "${grep_regex}" "${file}" 2>/dev/null | sed -nE "${sed_expr}" || true
-}
-
-extract_int_or_default() {
-  local grep_regex="$1"
-  local sed_expr="$2"
-  local file="$3"
-  local def="$4"
-
-  local v
-  v="$(extract_first_match "${grep_regex}" "${sed_expr}" "${file}")"
-  if [[ -z "${v}" || ! "${v}" =~ ^[0-9]+$ ]]; then
-    echo "${def}"
-    return 0
-  fi
-  echo "${v}"
-}
-
 if [ -z "${SLACK_WEBHOOK_URL:-}" ]; then
-  die "SLACK_WEBHOOK_URL environment variable is not set"
+  echo "Error: SLACK_WEBHOOK_URL environment variable is not set"
+  exit 1
 fi
 
-REPORT_FILE=$(ls -t reports/restart_revision_*.md 2>/dev/null | head -n 1 || true)
+REPORT_FILE=$(ls -t reports/restart_revision_*.md 2>/dev/null | head -n 1)
 if [ -z "$REPORT_FILE" ]; then
-  die "No report file found in reports/ directory"
+  echo "Error: No report file found in reports/ directory"
+  exit 1
 fi
 
 echo "Sending report: $REPORT_FILE"
 
-FILES_CREATED="$(extract_int_or_default '^\- \*\*Files Created\*\*:' 's/[^0-9]*([0-9]+).*/\1/p' "$REPORT_FILE" "0")"
-FILES_UPDATED="$(extract_int_or_default '^\- \*\*Files Updated\*\*:' 's/[^0-9]*([0-9]+).*/\1/p' "$REPORT_FILE" "0")"
-NEW_LINKS="$(extract_int_or_default '^\- \*\*new_links\*\*:' 's/[^0-9]*([0-9]+).*/\1/p' "$REPORT_FILE" "0")"
-UPDATED_LINKS="$(extract_int_or_default '^\- \*\*updated_links\*\*:' 's/[^0-9]*([0-9]+).*/\1/p' "$REPORT_FILE" "0")"
-
-REVISION_ID="$(extract_first_match '^\- \*\*revision_id\*\*:' 's/.*: (.+)/\1/p' "$REPORT_FILE")"
+FILES_CREATED=$(grep "Files Created" "$REPORT_FILE" | sed -E 's/.*: ([0-9]+)/\1/')
+FILES_UPDATED=$(grep "Files Updated" "$REPORT_FILE" | sed -E 's/.*: ([0-9]+)/\1/')
+NEW_LINKS=$(grep "new_links" "$REPORT_FILE" | sed -E 's/.*: ([0-9]+)/\1/')
+UPDATED_LINKS=$(grep "updated_links" "$REPORT_FILE" | sed -E 's/.*: ([0-9]+)/\1/')
+REVISION_ID=$(grep -E '^\- \*\*revision_id\*\*: ' "$REPORT_FILE" | sed -E 's/.*: (.+)/\1/' || echo "")
 if [ -z "$REVISION_ID" ]; then
-  REVISION_ID="$(extract_first_match '^\- \*\*RevisionID\*\*:' 's/.*: (.+)/\1/p' "$REPORT_FILE")"
+  REVISION_ID=$(grep -E '^\- \*\*RevisionID\*\*: ' "$REPORT_FILE" | sed -E 's/.*: (.+)/\1/' || echo "")
 fi
 REVISION_ID=${REVISION_ID:-"N/A"}
-CREATED_MATCH="$(extract_first_match 'Created vs NewLinks' 's/.*→ \*\*([^*]+)\*\*.*/\1/p' "$REPORT_FILE")"
-UPDATED_MATCH="$(extract_first_match 'Updated vs UpdatedLinks' 's/.*→ \*\*([^*]+)\*\*.*/\1/p' "$REPORT_FILE")"
-CREATED_MATCH="${CREATED_MATCH:-UNKNOWN}"
-UPDATED_MATCH="${UPDATED_MATCH:-UNKNOWN}"
+CREATED_MATCH=$(grep "Created vs NewLinks" "$REPORT_FILE" | sed -E 's/.*→ \*\*(.+)\*\*/\1/')
+UPDATED_MATCH=$(grep "Updated vs UpdatedLinks" "$REPORT_FILE" | sed -E 's/.*→ \*\*(.+)\*\*/\1/')
 
+# Helper function to detect if this was the first run
+# First run = daily_pages directory is empty or has no content-* subdirectories
+# Note: At the time this script runs, daily_pages may already be populated,
+# so we check if there's only one content-* directory (the one just created)
 is_first_run() {
     local daily_pages_dir="daily_pages"
     if [[ ! -d "${daily_pages_dir}" ]]; then
-        return 0
+        return 0  # First run - directory doesn't exist
     fi
     
+    # Check if there are any content-* subdirectories
     local content_dirs=$(find "${daily_pages_dir}" -mindepth 1 -maxdepth 1 -type d -name "content-*" 2>/dev/null | wc -l | tr -d ' ')
     if [[ ${content_dirs:-0} -eq 0 ]]; then
-        return 0
+        return 0  # First run - no content directories
     fi
     
-    return 1
+    return 1  # Not first run
 }
 
-EXPECTED_UPDATED="$(extract_first_match 'Updated vs UpdatedLinks' 's/.*Updated vs UpdatedLinks: \*\*([0-9]+).*/\1/p' "$REPORT_FILE")"
+# Account for Jekyll's automatic generation of feed.xml and home_page (index.html)
+# Extract EXPECTED_UPDATED from report file if available, otherwise calculate it
+# Try to extract from the Updated vs UpdatedLinks line first
+EXPECTED_UPDATED=$(grep "Updated vs UpdatedLinks" "$REPORT_FILE" | sed -E 's/.*Updated vs UpdatedLinks: \*\*([0-9]+).*/\1/' | head -1)
 if [[ -z "${EXPECTED_UPDATED}" ]] || ! [[ "${EXPECTED_UPDATED}" =~ ^[0-9]+$ ]]; then
-    EXPECTED_UPDATED="${FILES_UPDATED}"
+    # Fallback: Calculate based on same logic as compare.sh
+    EXPECTED_UPDATED=${FILES_UPDATED}
     JEKYLL_ADJUSTMENT=0
     
     if ! is_first_run && [[ ${NEW_LINKS} -gt 0 ]]; then
+        # Subsequent runs with new_links > 0: Add +1 (home_page only, feed.xml not updated)
+        # Based on real data: feed.xml is not updated when new_links > 0
         JEKYLL_ADJUSTMENT=1
         EXPECTED_UPDATED=$((FILES_UPDATED + JEKYLL_ADJUSTMENT))
     fi
@@ -111,11 +94,7 @@ else
   DASHBOARD_LINE=""
 fi
 
-payload_file="$(mktemp)"
-resp_file="$(mktemp)"
-trap 'rm -f "${payload_file}" "${resp_file}"' EXIT
-
-cat >"${payload_file}" <<EOF
+cat <<EOF | curl -fsS -X POST -H 'Content-type: application/json' -d @- "$SLACK_WEBHOOK_URL"
 {
   "blocks": [
     {
@@ -147,22 +126,5 @@ cat >"${payload_file}" <<EOF
   ]
 }
 EOF
-
-curl_exit=0
-http_code="$(curl -sS -o "${resp_file}" -w "%{http_code}" -X POST -H 'Content-type: application/json' --data @"${payload_file}" "$SLACK_WEBHOOK_URL" || curl_exit=$?)"
-
-if [[ "${curl_exit}" -ne 0 ]]; then
-  echo "Error: failed to POST to Slack webhook (curl exit ${curl_exit})" >&2
-  echo "Response body:" >&2
-  cat "${resp_file}" >&2 || true
-  exit 1
-fi
-
-if [[ ! "${http_code}" =~ ^2 ]]; then
-  echo "Error: Slack webhook returned HTTP ${http_code}" >&2
-  echo "Response body:" >&2
-  cat "${resp_file}" >&2 || true
-  exit 1
-fi
 
 echo "Report sent to Slack!"
