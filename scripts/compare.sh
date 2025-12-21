@@ -10,32 +10,12 @@ if [[ -z "${EVENT_JSON}" || ! -f "${EVENT_JSON}" ]]; then
   exit 1
 fi
 
-# Log the full GitHub event payload for debugging
-echo "=== GitHub Event Payload Debug ==="
-echo "GITHUB_EVENT_PATH: ${EVENT_JSON}"
-echo "--- Full event JSON content ---"
-cat "${EVENT_JSON}" | jq '.' 2>/dev/null || cat "${EVENT_JSON}"
-echo "--- End of event JSON ---"
-echo ""
-
-# Extract values from payload
 URL=$(jq -r '.client_payload.url // ""' "${EVENT_JSON}")
 REVISION_ID=$(jq -r '.client_payload.revision_id // ""' "${EVENT_JSON}")
 FOUND_LINKS=$(jq -r '.client_payload.found_links // 0' "${EVENT_JSON}")
 NEW_LINKS=$(jq -r '.client_payload.new_links // 0' "${EVENT_JSON}")
 UPDATED_LINKS=$(jq -r '.client_payload.updated_links // 0' "${EVENT_JSON}")
 EVENT_TYPE=$(jq -r '.event_type // ""' "${EVENT_JSON}")
-
-# Log extracted values
-echo "=== Extracted Payload Values ==="
-echo "URL: ${URL}"
-echo "REVISION_ID: ${REVISION_ID}"
-echo "FOUND_LINKS: ${FOUND_LINKS}"
-echo "NEW_LINKS: ${NEW_LINKS}"
-echo "UPDATED_LINKS: ${UPDATED_LINKS}"
-echo "EVENT_TYPE: ${EVENT_TYPE}"
-echo "================================="
-echo ""
 
 STATS_FILE="stats.md"
 if [[ ! -f "${STATS_FILE}" ]]; then
