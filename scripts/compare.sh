@@ -31,58 +31,9 @@ fi
 
 CREATED_MATCH=$([[ "${FILES_CREATED}" -eq "${NEW_LINKS}" ]] && echo "OK" || echo "MISMATCH")
 
-# Helper function to detect if this was the first run
-# Note: compare.sh runs AFTER run-content-management.sh, so daily_pages is already populated
-# We use found_links=0 as an indicator of first run (no existing links found)
-# Alternatively, check if stats.md shows this was the first run by checking if FILES_CREATED equals all content
-is_first_run() {
-    # If found_links is 0, it's likely the first run (no existing links to compare against)
-    if [[ ${FOUND_LINKS:-0} -eq 0 ]]; then
-        return 0
-    fi
-    
-    # Also check if daily_pages directory doesn't exist or is empty (shouldn't happen at this point, but safety check)
-    local daily_pages_dir="daily_pages"
-    if [[ ! -d "${daily_pages_dir}" ]]; then
-        return 0
-    fi
-    
-    local content_dirs=$(find "${daily_pages_dir}" -mindepth 1 -maxdepth 1 -type d -name "content-*" 2>/dev/null | wc -l | tr -d ' ')
-    if [[ ${content_dirs:-0} -eq 0 ]]; then
-        return 0
-    fi
-    
-    return 1
-}
-
-# Account for Jekyll's automatic generation of feed.xml and home_page (index.html)
-# stats.md contains raw file counts (actual files created/updated)
-# We need to add Jekyll adjustment to calculate expected updated_links value
-# Based on real data: first run with 1 file created → new_links=2 (1 file + 1 home_page), updated_links=0
-# Subsequent runs:
-#   - new_links > 0: Add +1 (home_page only, feed.xml not updated on subsequent runs)
-EXPECTED_UPDATED=${FILES_UPDATED}
-JEKYLL_ADJUSTMENT=0
-
-if ! is_first_run && [[ ${NEW_LINKS} -gt 0 ]]; then
-    # Subsequent runs with new_links > 0: Add +1 (home_page only, feed.xml not updated)
-    # Based on real data:
-    #   - new_links=6, files_updated=0 → updated_links=1 (only home_page)
-    #   - new_links=8, files_updated=3 → updated_links=4 (3 files + 1 home_page, feed not updated)
-    JEKYLL_ADJUSTMENT=1
-    EXPECTED_UPDATED=$((FILES_UPDATED + JEKYLL_ADJUSTMENT))
-fi
-
-UPDATED_MATCH=$([[ "${EXPECTED_UPDATED}" -eq "${UPDATED_LINKS}" ]] && echo "OK" || echo "MISMATCH")
-
-# Build description for updated comparison
-if [[ ${JEKYLL_ADJUSTMENT} -eq 2 ]]; then
-    UPDATED_DESC="${EXPECTED_UPDATED} (${FILES_UPDATED} files + ${JEKYLL_ADJUSTMENT} jekyll-generated: feed + home_page)"
-elif [[ ${JEKYLL_ADJUSTMENT} -eq 1 ]]; then
-    UPDATED_DESC="${EXPECTED_UPDATED} (${FILES_UPDATED} files + ${JEKYLL_ADJUSTMENT} jekyll-generated: home_page)"
-else
-    UPDATED_DESC="${EXPECTED_UPDATED}"
-fi
+# Compare FILES_UPDATED directly with updated_links from payload.
+# No Jekyll adjustment needed — data collector tracks actual content pages only.
+UPDATED_MATCH=$([[ "${FILES_UPDATED}" -eq "${UPDATED_LINKS}" ]] && echo "OK" || echo "MISMATCH")
 
 TS=$(date '+%Y-%m-%d %H:%M:%S')
 TS_ID=$(date '+%Y%m%d-%H%M%S')
@@ -109,7 +60,7 @@ title: "Restart Revision Compare ${TS_ID}"
 
 ## Comparison
 - Created vs NewLinks: **${FILES_CREATED}** ?= **${NEW_LINKS}** → **${CREATED_MATCH}**
-- Updated vs UpdatedLinks: **${UPDATED_DESC}** ?= **${UPDATED_LINKS}** → **${UPDATED_MATCH}**
+- Updated vs UpdatedLinks: **${FILES_UPDATED}** ?= **${UPDATED_LINKS}** → **${UPDATED_MATCH}**
 
 ---
 EOF

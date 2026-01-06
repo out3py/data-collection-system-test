@@ -1,0 +1,47 @@
+name: Parsing Test
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'scripts/**'
+      - 'test/**'
+      - '.github/workflows/parsing-test.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'scripts/**'
+      - 'test/**'
+      - '.github/workflows/parsing-test.yml'
+
+jobs:
+  test:
+    name: Run Parsing Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+      
+      - name: Make test script executable
+        run: chmod +x test/compare_test.sh
+      
+      - name: Run compare.sh tests
+        run: bash test/compare_test.sh
+      
+      - name: Upload test artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: test/tmp/reports/
+          retention-days: 7
+
