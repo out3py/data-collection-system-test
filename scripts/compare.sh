@@ -12,10 +12,25 @@ fi
 
 URL=$(jq -r '.client_payload.url // ""' "${EVENT_JSON}")
 REVISION_ID=$(jq -r '.client_payload.revision_id // ""' "${EVENT_JSON}")
-FOUND_LINKS=$(jq -r '.client_payload.found_links // 0' "${EVENT_JSON}")
-NEW_LINKS=$(jq -r '.client_payload.new_links // 0' "${EVENT_JSON}")
-UPDATED_LINKS=$(jq -r '.client_payload.updated_links // 0' "${EVENT_JSON}")
 EVENT_TYPE=$(jq -r '.event_type // ""' "${EVENT_JSON}")
+# false mismatches in bash arithmetic comparisons (e.g., "25\r" looks like "25" in markdown).
+sanitize_uint() {
+  local v
+  v="$(printf '%s' "${1:-}" | tr -d '\r\n\t ' | sed -E 's/[^0-9]//g')"
+  if [[ -z "${v}" ]]; then
+    echo "0"
+    return 0
+  fi
+  echo "${v}"
+}
+
+FOUND_LINKS_RAW=$(jq -r '.client_payload.found_links // 0' "${EVENT_JSON}")
+NEW_LINKS_RAW=$(jq -r '.client_payload.new_links // 0' "${EVENT_JSON}")
+UPDATED_LINKS_RAW=$(jq -r '.client_payload.updated_links // 0' "${EVENT_JSON}")
+
+FOUND_LINKS=$(sanitize_uint "${FOUND_LINKS_RAW}")
+NEW_LINKS=$(sanitize_uint "${NEW_LINKS_RAW}")
+UPDATED_LINKS=$(sanitize_uint "${UPDATED_LINKS_RAW}")
 
 STATS_FILE="stats.md"
 if [[ ! -f "${STATS_FILE}" ]]; then
@@ -23,10 +38,11 @@ if [[ ! -f "${STATS_FILE}" ]]; then
   FILES_CREATED=0
   FILES_UPDATED=0
 else
-  FILES_CREATED=$(grep -E '^\- \*\*Files Created\*\*:' "${STATS_FILE}" | head -1 | sed -E 's/[^0-9]+([0-9]+).*/\1/')
-  FILES_UPDATED=$(grep -E '^\- \*\*Files Updated\*\*:' "${STATS_FILE}" | head -1 | sed -E 's/[^0-9]+([0-9]+).*/\1/')
-  FILES_CREATED=${FILES_CREATED:-0}
-  FILES_UPDATED=${FILES_UPDATED:-0}
+  FILES_CREATED_RAW=$(grep -E '^\- \*\*Files Created\*\*:' "${STATS_FILE}" | head -1 | sed -E 's/[^0-9]+([0-9]+).*/\1/')
+  FILES_UPDATED_RAW=$(grep -E '^\- \*\*Files Updated\*\*:' "${STATS_FILE}" | head -1 | sed -E 's/[^0-9]+([0-9]+).*/\1/')
+
+  FILES_CREATED=$(sanitize_uint "${FILES_CREATED_RAW}")
+  FILES_UPDATED=$(sanitize_uint "${FILES_UPDATED_RAW}")
 fi
 
 CREATED_MATCH=$([[ "${FILES_CREATED}" -eq "${NEW_LINKS}" ]] && echo "OK" || echo "MISMATCH")
@@ -103,9 +119,18 @@ title: "Restart Revision Compare ${TS_ID}"
 - **new_links**: ${NEW_LINKS}
 - **updated_links**: ${UPDATED_LINKS}
 
+## Raw values (debug)
+- **found_links_raw**: $(printf '%q' "${FOUND_LINKS_RAW}")
+- **new_links_raw**: $(printf '%q' "${NEW_LINKS_RAW}")
+- **updated_links_raw**: $(printf '%q' "${UPDATED_LINKS_RAW}")
+
 ## Current stats.md
 - **Files Created**: ${FILES_CREATED}
 - **Files Updated**: ${FILES_UPDATED}
+
+## Raw values from stats.md (debug)
+- **Files Created raw**: $(printf '%q' "${FILES_CREATED_RAW:-}")
+- **Files Updated raw**: $(printf '%q' "${FILES_UPDATED_RAW:-}")
 
 ## Comparison
 - Created vs NewLinks: **${FILES_CREATED}** ?= **${NEW_LINKS}** → **${CREATED_MATCH}**
