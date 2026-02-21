@@ -2,8 +2,6 @@ name: Trigger report for auto-test
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '10 6 * * *'  # 9:10 AM Moscow time (UTC+3)
 
 jobs:
   trigger:

@@ -3,9 +3,6 @@ name: Restart revision for auto-test
 on:
   workflow_dispatch:
 
-  schedule:
-    - cron: '25 6 * * *'  # 9:25 AM Moscow time (UTC+3)
-
 jobs:
   trigger:
     name: Restart revision
